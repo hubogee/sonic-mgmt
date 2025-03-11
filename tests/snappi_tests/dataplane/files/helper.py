@@ -51,16 +51,17 @@ def setup_snappi_port_configs(duthosts, get_snappi_ports):
 
         port_name = port['location']
         hostname = port['duthost'].hostname
+  
         port_list.append({'ipAddress':  ip_addresses[index], 
-                          'ipGateway': duthost_vlan_interface[hostname]['vlan_ip'], 
+                          'ipGateway': duthost_vlan_interface[hostname]['vlan_ip'] , 
                           'prefix': duthost_vlan_interface[hostname]['ip_prefix'],
                           'subnet': duthost_vlan_interface[hostname]['subnet'], 
                           'src_mac_address': src_mac_address,
                           'router_mac_address': router_mac_address,
                           'speed': speed,
                           'snappi_speed_type': port['snappi_speed_type'],
-                          'connected_to_dut_port': port['peer_port'],
-                          'port_name': port['location'],
+                          'peer_port': port['peer_port'],
+                          'location': port['location'],
                           'duthost': port['duthost'],
                           'api_server_ip': port['api_server_ip'],
                           'asic_type': port['asic_type'],
@@ -93,23 +94,23 @@ def get_duthost_vlan_details(duthosts):
     # Keep track of all gateway IP addresses to exclude from generating src ip addresses
     all_vlan_gateway_ip = []
  
+    duthost_vlan_interface = {dut.hostname: {'vlan_id': '', 'vlan_ip': '', 'subnet': '', 'ip_prefix': ''} for dut in duthosts}
+    
     for dut in duthosts:
-        duthost_vlan_interface[dut.hostname] = {}
-        duthost_minigraph_vlan_interface = dut.minigraph_facts(host=dut.hostname)['ansible_facts']['minigraph_vlan_interfaces']
-        
-        vlan_id =   duthost_minigraph_vlan_interface[0]['attachto']
-        vlan_ip =   duthost_minigraph_vlan_interface[0]['addr']
-        ip_prefix = duthost_minigraph_vlan_interface[0]['prefixlen']
-        subnet =    duthost_minigraph_vlan_interface[0]['subnet']
-        
-        duthost_vlan_interface[dut.hostname].update({'vlan_id': vlan_id, 'vlan_ip': vlan_ip, 'subnet': subnet, 'ip_prefix': ip_prefix})
-                                                      
-        if vlan_ip not in all_vlan_gateway_ip:
-            all_vlan_gateway_ip.append(vlan_ip)
+        # NOTE! This only gets the first vlan interface
+        duthost_minigraph_vlan_interface = dut.minigraph_facts(host=dut.hostname)['ansible_facts']['minigraph_vlan_interfaces'][0]
+
+        duthost_vlan_interface[dut.hostname] = {'vlan_id':   duthost_minigraph_vlan_interface['attachto'], 
+                                                'vlan_ip':   duthost_minigraph_vlan_interface['addr'], 
+                                                'subnet':    duthost_minigraph_vlan_interface['subnet'], 
+                                                'ip_prefix': duthost_minigraph_vlan_interface['prefixlen']}
+                                                                      
+        if duthost_minigraph_vlan_interface['addr'] not in all_vlan_gateway_ip:
+            all_vlan_gateway_ip.append(duthost_minigraph_vlan_interface['addr'])
 
         # subnet_tracker is for ip address generator
-        if subnet not in subnet_tracker:
-            subnet_tracker.append(subnet)
+        if duthost_minigraph_vlan_interface['subnet'] not in subnet_tracker:
+            subnet_tracker.append(duthost_minigraph_vlan_interface['subnet'])
     
     return (duthost_vlan_interface, subnet_tracker, all_vlan_gateway_ip)
 
