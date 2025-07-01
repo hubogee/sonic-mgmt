@@ -105,9 +105,6 @@ def read_dut_qos_configurations(Common_vars, duthost):
                 
                 if snappi_peer_port_name == eth_interface:
                     eth_interface_queue_id = int(interface.split('|')[1])
-                    eth_interface_scheduler_id = verify_dut_scheduler_obj['QUEUE'][interface]['scheduler']
-                    scheduler_id_weight = verify_dut_scheduler_obj['SCHEDULER'][eth_interface_scheduler_id]['weight']
-            
                     if snappi_rx_port['peer_port'] == eth_interface:
                         if int(eth_interface_queue_id) not in properties['queue_id_list']:
                             properties['queue_id_list'].append(eth_interface_queue_id)    
